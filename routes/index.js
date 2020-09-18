@@ -6,7 +6,9 @@ const url = require('url')
 let Image = require('../models/images');
 
 
-var db = []
+// var db = []
+
+// HP Router
 
 router.get('/', (req,res)=>{
     
@@ -16,6 +18,8 @@ router.get('/', (req,res)=>{
         res.render('index',{images:images, msg: req.query.msg })
     })
 })
+
+//Image post Route 
 
 router.post('/upload', (req, res)=>{
     upload(req,res, (err)=>{
