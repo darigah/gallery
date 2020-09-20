@@ -23,7 +23,6 @@ This project is a web application that allows users to upload photos to the clou
 ## Technologies Used
 
 * NodeJS 
-* HTML, CSS
 * Heroku
 * MongoDB Atlas
 * Jenkins 
