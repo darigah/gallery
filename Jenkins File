@@ -62,10 +62,6 @@ pipeline {
   }
 }
 
-
-  
-    
-
 }
 
 post {
@@ -88,9 +84,7 @@ post {
 
                 to: EMAIL_RECEPIENT
         }
-
        
     }
-
 
 }
