@@ -38,7 +38,7 @@ pipeline {
   
     stage('clone repository') {
       steps{
-      git 'https://github.com/darigah/gallery.github.io.git'
+      git 'https://github.com/darigah/gallery'
     }
     }
 
