@@ -1,90 +1,77 @@
-  
-pipeline { 
-  agent any
-  environment {
-    
-      BUILD_URL= "https://pure-shore-77280.herokuapp.com/"
+pipeline {
+    agent any
+    environment {
+        EMAIL_BODY =
+            """
+                <p>EXECUTED: Job <strong>\'${env.JOB_NAME}:${env.BUILD_NUMBER}\'</strong></p>
+                <p>
+                View console output at 
+                "<a href="${env.BUILD_URL}">${env.JOB_NAME}:${env.BUILD_NUMBER}</a>"
+                </p> 
+                <p><em>(Build log is attached.)</em></p>
 
-        EMAIL_BODY = 
-
-       """
-            <p>EXECUTED: Job <b>\'${env.JOB_NAME}:${env.BUILD_NUMBER})\'</b></p>
-            <p>
-            View console output at 
-            "<a href="${env.BUILD_URL}">${env.JOB_NAME}:${env.BUILD_NUMBER}</a>"
-            </p> 
-            <p><i>(Build log is attached.)</i></p>
-       """
-
+            """
         EMAIL_SUBJECT_SUCCESS = "Status: 'SUCCESS' -Job \'${env.JOB_NAME}:${env.BUILD_NUMBER}\'" 
-
-        EMAIL_SUBJECT_FAILURE = "Status: 'FAILURE' -Job \'${env.JOB_NAME}:${env.BUILD_NUMBER}\'" 
-
+        EMAIL_SUBJECT_FAILURE = "Status: 'FAILURE' -Job \'${env.JOB_NAME}:${env.BUILD_NUMBER}\'"
+        EMAIL_SUBJECT_TEST_FAILURE = "Status: 'TEST FAILURE' -Job \'${env.JOB_NAME}:${env.BUILD_NUMBER}\'"
         EMAIL_RECEPIENT = 'sharqatin@gmail.com'
-
+        APP_URL = 'https://pure-shore-77280.herokuapp.com/'
     }
-  stages { 
-
-    stage('Checkout'){
-      steps{
-        script{
-          sh 'git log HEAD^..HEAD --pretty="%h - %s" > GIT_CHANGES'
-          def lastChanges =  readFile('GIT_CHANGES')
-          slackSend color: "warning", message: "Started `${env.JOB_NAME} ${env.BUILD_NUMBER}` \n\n_The changes:_\n${lastChanges}"
-        }
-      }
+    tools {
+        nodejs 'NodeJS-4'
     }
-      
-  
-    stage('clone repository') {
-      steps{
-      git 'https://github.com/darigah/gallery'
-    }
-    }
-
-    stage('Build') { 
-         steps {
-             sh 'npm install' 
+    stages {
+        stage('Clone repo') {
+            steps {
+                git 'https://github.com/darigah/gallery'
             }
         }
-
-    stage('Test') { 
-        steps {
-             sh 'npm test' 
+        stage('Test Build'){
+            steps{
+                sh 'npm test'
+            }
+            post {
+                failure {
+                    emailext attachLog: true,
+                    body: EMAIL_BODY,
+                    subject: EMAIL_SUBJECT_TEST_FAILURE,
+                    to: EMAIL_RECEPIENT
+                }
             }
         }
-   
-   stage('Deploy to Heroku') {
-       steps {
-           withCredentials([usernameColonPassword(credentialsId: 'heroku', variable: 'HEROKU_CREDENTIALS' )]){
-            sh 'git push https://${HEROKU_CREDENTIALS}@git.heroku.com/pure-shore-77280.git master'
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Deploy to Heroku') {
+            steps {
+                withCredentials([usernameColonPassword(credentialsId: 'Heroku', variable: 'HEROKU_CREDENTIALS')]){
+                    sh 'git push https://${HEROKU_CREDENTIALS}@git.heroku.com/pure-shore-77280.git master'
+                }
+            }
+            post {
+                success {
+                    slackSend color: "good", message: "Build \'${env.JOB_NAME}:${env.BUILD_NUMBER}\' successfully deployed to Heroku \n '${env.APP_URL}` :man_dancing: :man_dancing:"
+                }
+                failure {
+                    slackSend color: "danger", message: "Build `${env.JOB_NAME}:${env.BUILD_NUMBER}` failed deployment to Heroku \n`${env.APP_URL}` :face_palm:"
+                }
+            }
+        }
     }
-  }
-}
-
-}
-
-post {
+    post {
         success {
-          slackSend color: "good", message: "Build successful :man_dancing: \n`${env.JOB_NAME} ${env.BUILD_NUMBER}` (<${env.BUILD_URL}|Open in heroku>) "
             emailext attachLog: true, 
-                body: EMAIL_BODY, 
-
-                subject: EMAIL_SUBJECT_SUCCESS,
-
-                to: EMAIL_RECEPIENT
+            body: EMAIL_BODY,
+            subject: EMAIL_SUBJECT_SUCCESS, 
+            to: EMAIL_RECEPIENT
         }
-
         failure {
-          slackSend color: "danger", message: "Build failed :white_frowning_face: \n`${env.JOB_NAME} ${env.BUILD_NUMBER}` (<${env.BUILD_URL}|Open in heroku>)"
             emailext attachLog: true, 
-                body: EMAIL_BODY, 
-
-                subject: EMAIL_SUBJECT_FAILURE, 
-
-                to: EMAIL_RECEPIENT
+            body: EMAIL_BODY,
+            subject: EMAIL_SUBJECT_FAILURE, 
+            to: EMAIL_RECEPIENT
         }
-       
     }
-
 }
