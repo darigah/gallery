@@ -8,7 +8,7 @@
     "test": "mocha --exit"
   },
   "keywords": [],
-  "author": "Timothy Matara",
+  "author": "Douglas Arigah",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.19.0",
